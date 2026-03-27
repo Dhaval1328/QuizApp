@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/primary"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="28dp">
+
+        <TextView
+            android:id="@+id/tvWelcome"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Welcome!"
+            android:textColor="@android:color/white"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Choose a subject to begin"
+            android:textColor="#CCFFFFFF"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardJava"
+                style="@style/SubjectCardStyle">
+                <LinearLayout style="@style/SubjectCardInnerLayout">
+                    <TextView style="@style/SubjectIconStyle" android:background="@drawable/circle_bg_orange" android:text="☕" />
+                    <LinearLayout style="@style/SubjectTextContainer">
+                        <TextView style="@style/SubjectTitleStyle" android:text="Java" />
+                    </LinearLayout>
+                    <TextView style="@style/SubjectArrowStyle" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardPython"
+                style="@style/SubjectCardStyle">
+                <LinearLayout style="@style/SubjectCardInnerLayout">
+                    <TextView style="@style/SubjectIconStyle" android:background="@drawable/circle_bg_blue" android:text="Py" android:textColor="@color/color_python" />
+                    <LinearLayout style="@style/SubjectTextContainer">
+                        <TextView style="@style/SubjectTitleStyle" android:text="Python" />
+                    </LinearLayout>
+                    <TextView style="@style/SubjectArrowStyle" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardCpp"
+                style="@style/SubjectCardStyle">
+                <LinearLayout style="@style/SubjectCardInnerLayout">
+                    <TextView style="@style/SubjectIconStyle" android:background="@drawable/circle_bg_purple" android:text="C++" android:textColor="@color/color_cpp" />
+                    <LinearLayout style="@style/SubjectTextContainer">
+                        <TextView style="@style/SubjectTitleStyle" android:text="C++" />
+                    </LinearLayout>
+                    <TextView style="@style/SubjectArrowStyle" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardMobile"
+                style="@style/SubjectCardStyle">
+                <LinearLayout style="@style/SubjectCardInnerLayout">
+                    <TextView style="@style/SubjectIconStyle" android:background="@drawable/circle_bg_blue" android:text="📱" />
+                    <LinearLayout style="@style/SubjectTextContainer">
+                        <TextView style="@style/SubjectTitleStyle" android:text="Mobile Programming" />
+                    </LinearLayout>
+                    <TextView style="@style/SubjectArrowStyle" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardC"
+                style="@style/SubjectCardStyle">
+                <LinearLayout style="@style/SubjectCardInnerLayout">
+                    <TextView style="@style/SubjectIconStyle" android:background="@drawable/circle_bg_purple" android:text="C" />
+                    <LinearLayout style="@style/SubjectTextContainer">
+                        <TextView style="@style/SubjectTitleStyle" android:text="C Programming" />
+                    </LinearLayout>
+                    <TextView style="@style/SubjectArrowStyle" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardDotNet"
+                style="@style/SubjectCardStyle">
+                <LinearLayout style="@style/SubjectCardInnerLayout">
+                    <TextView style="@style/SubjectIconStyle" android:background="@drawable/circle_bg_blue" android:text=".NET" android:textSize="14sp" />
+                    <LinearLayout style="@style/SubjectTextContainer">
+                        <TextView style="@style/SubjectTitleStyle" android:text=".NET Framework" />
+                    </LinearLayout>
+                    <TextView style="@style/SubjectArrowStyle" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardCsharp"
+                style="@style/SubjectCardStyle">
+                <LinearLayout style="@style/SubjectCardInnerLayout">
+                    <TextView style="@style/SubjectIconStyle" android:background="@drawable/circle_bg_green" android:text="C#" />
+                    <LinearLayout style="@style/SubjectTextContainer">
+                        <TextView style="@style/SubjectTitleStyle" android:text="C# Programming" />
+                    </LinearLayout>
+                    <TextView style="@style/SubjectArrowStyle" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardJS"
+                style="@style/SubjectCardStyle">
+                <LinearLayout style="@style/SubjectCardInnerLayout">
+                    <TextView style="@style/SubjectIconStyle" android:background="@drawable/circle_bg_orange" android:text="JS" />
+                    <LinearLayout style="@style/SubjectTextContainer">
+                        <TextView style="@style/SubjectTitleStyle" android:text="JavaScript" />
+                    </LinearLayout>
+                    <TextView style="@style/SubjectArrowStyle" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardRdbms"
+                style="@style/SubjectCardStyle">
+                <LinearLayout style="@style/SubjectCardInnerLayout">
+                    <TextView style="@style/SubjectIconStyle" android:background="@drawable/circle_bg_red" android:text="SQL" android:textSize="14sp" />
+                    <LinearLayout style="@style/SubjectTextContainer">
+                        <TextView style="@style/SubjectTitleStyle" android:text="RDBMS" />
+                    </LinearLayout>
+                    <TextView style="@style/SubjectArrowStyle" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

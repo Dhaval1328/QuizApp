@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#3F51B5</color>
+    <color name="primary_dark">#303F9F</color>
+    <color name="primary_light">#7986CB</color>
+    <color name="accent">#FF4081</color>
+    <color name="background">#F5F5F5</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="error_red">#F44336</color>
+    <color name="color_java">#FF6F00</color>
+    <color name="color_python">#1565C0</color>
+    <color name="color_cpp">#6A1B9A</color>
+    <color name="color_gk">#2E7D32</color>
+    <color name="color_math">#C62828</color>
+    <color name="grade_excellent">#FFD700</color>
+    <color name="grade_great">#4CAF50</color>
+    <color name="grade_good">#2196F3</color>
+    <color name="grade_average">#FF9800</color>
+    <color name="grade_poor">#F44336</color>
+    <color name="circle_orange">#FFF3E0</color>
+    <color name="circle_blue">#E3F2FD</color>
+    <color name="circle_purple">#F3E5F5</color>
+    <color name="circle_green">#E8F5E9</color>
+    <color name="circle_red">#FFEBEE</color>
+</resources>
