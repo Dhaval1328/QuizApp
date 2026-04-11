@@ -12,6 +12,7 @@
         android:orientation="vertical"
         android:padding="24dp">
 
+        <!-- Header -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -43,6 +44,7 @@
                 android:textSize="16sp" />
         </LinearLayout>
 
+        <!-- Login Card -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -88,11 +90,26 @@
                         android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <!-- Forgot Password -->
+                <TextView
+                    android:id="@+id/tvForgotPassword"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:layout_marginTop="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:text="Forgot Password?"
+                    android:textColor="@color/primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <!-- Login Button -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnLogin"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
-                    android:layout_marginTop="24dp"
+                    android:layout_marginTop="20dp"
                     android:text="LOGIN"
                     android:textSize="16sp"
                     app:cornerRadius="12dp" />
@@ -100,6 +117,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <!-- Register Link -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

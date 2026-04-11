@@ -36,10 +36,16 @@ public class LoginActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.etPassword);
         MaterialButton btnLogin = findViewById(R.id.btnLogin);
 
+        // Login button
         btnLogin.setOnClickListener(v -> attemptLogin());
 
+        // Register link
         findViewById(R.id.tvRegisterLink).setOnClickListener(v ->
                 startActivity(new Intent(this, RegisterActivity.class)));
+
+        // Forgot Password link
+        findViewById(R.id.tvForgotPassword).setOnClickListener(v ->
+                startActivity(new Intent(this, ForgotPasswordActivity.class)));
     }
 
     private void attemptLogin() {

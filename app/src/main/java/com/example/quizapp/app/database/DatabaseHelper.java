@@ -8,20 +8,19 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import com.example.quizapp.app.models.UserModel;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "QuizApp.db";
     private static final int DB_VERSION = 1;
 
+    // Table: Users
     private static final String TABLE_USERS = "users";
     private static final String COL_ID = "id";
     private static final String COL_NAME = "name";
     private static final String COL_EMAIL = "email";
     private static final String COL_PASSWORD = "password";
 
+    // Table: Quiz Attempts
     private static final String TABLE_ATTEMPTS = "quiz_attempts";
     private static final String COL_USER_EMAIL = "user_email";
     private static final String COL_SUBJECT = "subject";
@@ -36,14 +35,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String createUsers = "CREATE TABLE " + TABLE_USERS + " (" +
+        String createUsersTable = "CREATE TABLE " + TABLE_USERS + " (" +
                 COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 COL_NAME + " TEXT NOT NULL, " +
                 COL_EMAIL + " TEXT UNIQUE NOT NULL, " +
                 COL_PASSWORD + " TEXT NOT NULL)";
-        db.execSQL(createUsers);
 
-        String createAttempts = "CREATE TABLE " + TABLE_ATTEMPTS + " (" +
+        String createAttemptsTable = "CREATE TABLE " + TABLE_ATTEMPTS + " (" +
                 COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 COL_USER_EMAIL + " TEXT NOT NULL, " +
                 COL_SUBJECT + " TEXT NOT NULL, " +
@@ -51,7 +49,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COL_TOTAL + " INTEGER DEFAULT 0, " +
                 COL_TIMESTAMP + " TEXT, " +
                 COL_COMPLETED + " INTEGER DEFAULT 0)";
-        db.execSQL(createAttempts);
+
+        db.execSQL(createUsersTable);
+        db.execSQL(createAttemptsTable);
     }
 
     @Override
@@ -61,84 +61,95 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
+    // --- AUTHENTICATION METHODS ---
+
     public boolean registerUser(String name, String email, String password) {
-        if (isEmailRegistered(email)) return false;
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues cv = new ContentValues();
-        cv.put(COL_NAME, name);
-        cv.put(COL_EMAIL, email);
-        cv.put(COL_PASSWORD, password);
-        long result = db.insert(TABLE_USERS, null, cv);
-        db.close();
-        return result != -1;
+        String cleanEmail = email.toLowerCase().trim();
+        if (isEmailRegistered(cleanEmail)) return false;
+
+        try (SQLiteDatabase db = this.getWritableDatabase()) {
+            ContentValues cv = new ContentValues();
+            cv.put(COL_NAME, name);
+            cv.put(COL_EMAIL, cleanEmail);
+            cv.put(COL_PASSWORD, password);
+            long result = db.insert(TABLE_USERS, null, cv);
+            return result != -1;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public boolean isEmailRegistered(String email) {
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.query(TABLE_USERS, new String[]{COL_EMAIL},
-                COL_EMAIL + "=?", new String[]{email}, null, null, null);
-        boolean exists = cursor.getCount() > 0;
-        cursor.close();
-        return exists;
+        try (SQLiteDatabase db = this.getReadableDatabase();
+             Cursor cursor = db.query(TABLE_USERS, new String[]{COL_EMAIL},
+                     COL_EMAIL + "=?", new String[]{email.toLowerCase().trim()},
+                     null, null, null)) {
+            return cursor != null && cursor.getCount() > 0;
+        }
     }
 
     public UserModel loginUser(String email, String password) {
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.query(TABLE_USERS, null,
-                COL_EMAIL + "=? AND " + COL_PASSWORD + "=?",
-                new String[]{email, password}, null, null, null);
-        if (cursor.moveToFirst()) {
-            UserModel user = new UserModel();
-            user.setId(cursor.getInt(cursor.getColumnIndexOrThrow(COL_ID)));
-            user.setName(cursor.getString(cursor.getColumnIndexOrThrow(COL_NAME)));
-            user.setEmail(cursor.getString(cursor.getColumnIndexOrThrow(COL_EMAIL)));
-            cursor.close();
-            return user;
+        UserModel user = null;
+        try (SQLiteDatabase db = this.getReadableDatabase();
+             Cursor cursor = db.query(TABLE_USERS, null,
+                     COL_EMAIL + "=? AND " + COL_PASSWORD + "=?",
+                     new String[]{email.toLowerCase().trim(), password},
+                     null, null, null)) {
+
+            if (cursor != null && cursor.moveToFirst()) {
+                user = new UserModel();
+                user.setId(cursor.getInt(cursor.getColumnIndexOrThrow(COL_ID)));
+                user.setName(cursor.getString(cursor.getColumnIndexOrThrow(COL_NAME)));
+                user.setEmail(cursor.getString(cursor.getColumnIndexOrThrow(COL_EMAIL)));
+            }
         }
-        cursor.close();
-        return null;
+        return user;
     }
 
-    /**
-     * Saves a new quiz attempt. Since COL_ID is AUTOINCREMENT,
-     * this will create a new row every time the user finishes a quiz.
-     */
+    public boolean updatePassword(String email, String newPassword) {
+        try (SQLiteDatabase db = this.getWritableDatabase()) {
+            ContentValues cv = new ContentValues();
+            cv.put(COL_PASSWORD, newPassword);
+            int rows = db.update(TABLE_USERS, cv, COL_EMAIL + "=?",
+                    new String[]{email.toLowerCase().trim()});
+            return rows > 0;
+        }
+    }
+
+    // --- QUIZ LOGIC METHODS (Fixes SubjectSelection Error) ---
+
     public void saveAttempt(String userEmail, String subject, int score, int total) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues cv = new ContentValues();
-        cv.put(COL_USER_EMAIL, userEmail);
-        cv.put(COL_SUBJECT, subject);
-        cv.put(COL_SCORE, score);
-        cv.put(COL_TOTAL, total);
-        cv.put(COL_TIMESTAMP, String.valueOf(System.currentTimeMillis()));
-        cv.put(COL_COMPLETED, 1);
-        db.insert(TABLE_ATTEMPTS, null, cv);
-        db.close();
+        try (SQLiteDatabase db = this.getWritableDatabase()) {
+            ContentValues cv = new ContentValues();
+            cv.put(COL_USER_EMAIL, userEmail.toLowerCase().trim());
+            cv.put(COL_SUBJECT, subject);
+            cv.put(COL_SCORE, score);
+            cv.put(COL_TOTAL, total);
+            cv.put(COL_TIMESTAMP, String.valueOf(System.currentTimeMillis()));
+            cv.put(COL_COMPLETED, 1);
+            db.insert(TABLE_ATTEMPTS, null, cv);
+        }
     }
 
     /**
-     * FIXED: This now returns false so the app doesn't block the user.
-     * Use this ONLY if you want to check if they have EVER taken it.
+     * Re-added this method to resolve the error in SubjectSelectionActivity.
+     * Returns false so users can always enter the quiz.
      */
     public boolean hasCompletedQuiz(String userEmail, String subject) {
-        // Return false here to ensure the "Already Taken" block is bypassed.
         return false;
     }
 
-    /**
-     * OPTIONAL: Get the highest score for a specific subject
-     */
     public int getHighScore(String userEmail, String subject) {
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT MAX(" + COL_SCORE + ") FROM " + TABLE_ATTEMPTS +
-                        " WHERE " + COL_USER_EMAIL + "=? AND " + COL_SUBJECT + "=?",
-                new String[]{userEmail, subject});
-
         int highScore = 0;
-        if (cursor.moveToFirst()) {
-            highScore = cursor.getInt(0);
+        String query = "SELECT MAX(" + COL_SCORE + ") FROM " + TABLE_ATTEMPTS +
+                " WHERE " + COL_USER_EMAIL + "=? AND " + COL_SUBJECT + "=?";
+
+        try (SQLiteDatabase db = this.getReadableDatabase();
+             Cursor cursor = db.rawQuery(query, new String[]{userEmail.toLowerCase().trim(), subject})) {
+            if (cursor != null && cursor.moveToFirst()) {
+                highScore = cursor.getInt(0);
+            }
         }
-        cursor.close();
         return highScore;
     }
 }
