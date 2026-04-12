@@ -5,89 +5,116 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.quizapp.R;
-import com.example.quizapp.app.database.DatabaseHelper;
+import com.example.quizapp.app.SupabaseHelper;
 import com.example.quizapp.app.models.QuestionModel;
-import com.example.quizapp.app.utils.QuestionLoader;
 import com.example.quizapp.app.utils.SessionManager;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
 public class QuizActivity extends AppCompatActivity {
 
-    TextView tvTimer, tvQuestion, tvProgress, tvSubject;
+    TextView   tvTimer, tvQuestion, tvProgress, tvSubject;
     RadioGroup radioGroup;
     RadioButton rbOption1, rbOption2, rbOption3, rbOption4;
-    Button btnPrev, btnNext;
+    Button      btnPrev, btnNext;
+    ProgressBar progressBar;
 
     List<QuestionModel> questions;
     String[] userAnswers;
 
-    int currentIndex = 0;
+    int    currentIndex = 0;
     String subjectName;
-    String fileName;
+    int    subjectId;
 
     CountDownTimer timer;
-    long QUIZ_TIME = 10 * 60 * 1000;
+    long QUIZ_TIME = 10 * 60 * 1000; // 10 minutes
 
-    DatabaseHelper db;
     SessionManager session;
+    SupabaseHelper supabaseHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_quiz);
 
-        session = new SessionManager(this);
-        db      = new DatabaseHelper(this);
+        session         = new SessionManager(this);
+        supabaseHelper  = new SupabaseHelper(this);
 
         subjectName = getIntent().getStringExtra("subject_name");
-        fileName    = getIntent().getStringExtra("file_name");
+        subjectId   = getIntent().getIntExtra("subject_id", -1);
 
-        if (subjectName == null || fileName == null) {
+        if (subjectName == null || subjectId == -1) {
             Toast.makeText(this, "Quiz data missing!", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        tvTimer    = findViewById(R.id.tvTimer);
-        tvQuestion = findViewById(R.id.tvQuestion);
-        tvProgress = findViewById(R.id.tvProgress);
-        tvSubject  = findViewById(R.id.tvSubject);
-        radioGroup = findViewById(R.id.radioGroup);
-        rbOption1  = findViewById(R.id.rbOption1);
-        rbOption2  = findViewById(R.id.rbOption2);
-        rbOption3  = findViewById(R.id.rbOption3);
-        rbOption4  = findViewById(R.id.rbOption4);
-        btnPrev    = findViewById(R.id.btnPrev);
-        btnNext    = findViewById(R.id.btnNext);
+        // Initialize Views
+        tvTimer      = findViewById(R.id.tvTimer);
+        tvQuestion   = findViewById(R.id.tvQuestion);
+        tvProgress   = findViewById(R.id.tvProgress);
+        tvSubject    = findViewById(R.id.tvSubject);
+        radioGroup   = findViewById(R.id.radioGroup);
+        rbOption1    = findViewById(R.id.rbOption1);
+        rbOption2    = findViewById(R.id.rbOption2);
+        rbOption3    = findViewById(R.id.rbOption3);
+        rbOption4    = findViewById(R.id.rbOption4);
+        btnPrev      = findViewById(R.id.btnPrev);
+        btnNext      = findViewById(R.id.btnNext);
+        progressBar  = findViewById(R.id.progressBar);
 
         tvSubject.setText(subjectName);
+        setQuizUiVisible(false);
+        tvQuestion.setText("Loading questions...");
 
-        questions = QuestionLoader.loadQuestions(this, fileName);
-        if (questions == null || questions.size() == 0) {
-            Toast.makeText(this, "No questions found for " + subjectName, Toast.LENGTH_LONG).show();
-            finish();
-            return;
-        }
+        // --- NEW: Modern Back Press Logic ---
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                showExitDialog();
+            }
+        });
 
-        Collections.shuffle(questions);
-        if (questions.size() > 20) questions = questions.subList(0, 20);
+        // Fetch Questions from Supabase
+        supabaseHelper.fetchQuestions(subjectId, new SupabaseHelper.QuestionCallback() {
+            @Override
+            public void onSuccess(List<QuestionModel> loaded) {
+                if (progressBar != null) progressBar.setVisibility(View.GONE);
 
-        userAnswers = new String[questions.size()];
-        loadQuestion(0);
-        startTimer();
+                if (loaded == null || loaded.isEmpty()) {
+                    Toast.makeText(QuizActivity.this, "No questions found for " + subjectName, Toast.LENGTH_LONG).show();
+                    finish();
+                    return;
+                }
+
+                questions = loaded.size() > 20 ? loaded.subList(0, 20) : loaded;
+                userAnswers = new String[questions.size()];
+
+                setQuizUiVisible(true);
+                loadQuestion(0);
+                startTimer();
+            }
+
+            @Override
+            public void onError(String message) {
+                if (progressBar != null) progressBar.setVisibility(View.GONE);
+                Toast.makeText(QuizActivity.this, "Failed to load questions: " + message, Toast.LENGTH_LONG).show();
+                finish();
+            }
+        });
 
         btnPrev.setOnClickListener(v -> {
             saveAnswer();
@@ -106,6 +133,24 @@ public class QuizActivity extends AppCompatActivity {
                 checkAndSubmit();
             }
         });
+    }
+
+    private void showExitDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Exit Quiz")
+                .setMessage("Are you sure you want to quit? Progress will be lost.")
+                .setPositiveButton("Yes", (d, w) -> finish()) // Use finish() to close the quiz
+                .setNegativeButton("No", null)
+                .show();
+    }
+
+    private void setQuizUiVisible(boolean visible) {
+        int vis = visible ? View.VISIBLE : View.GONE;
+        radioGroup.setVisibility(vis);
+        btnPrev.setVisibility(vis);
+        btnNext.setVisibility(vis);
+        tvProgress.setVisibility(vis);
+        tvTimer.setVisibility(vis);
     }
 
     void loadQuestion(int index) {
@@ -137,10 +182,7 @@ public class QuizActivity extends AppCompatActivity {
 
     void saveAnswer() {
         int id = radioGroup.getCheckedRadioButtonId();
-        if (id == -1) {
-            userAnswers[currentIndex] = null;
-            return;
-        }
+        if (id == -1) { userAnswers[currentIndex] = null; return; }
         RadioButton rb = findViewById(id);
         if (rb != null) userAnswers[currentIndex] = rb.getText().toString();
     }
@@ -171,7 +213,6 @@ public class QuizActivity extends AppCompatActivity {
 
     void submitQuiz() {
         if (timer != null) timer.cancel();
-
         int correct = 0;
         for (int i = 0; i < questions.size(); i++) {
             String ca = questions.get(i).getCorrectAnswer();
@@ -181,10 +222,23 @@ public class QuizActivity extends AppCompatActivity {
             }
         }
 
-        db.saveAttempt(session.getEmail(), subjectName, correct, questions.size());
+        int finalCorrect = correct;
+        supabaseHelper.saveQuizAttempt(subjectName, correct, questions.size(), new SupabaseHelper.RegistrationCallback() {
+            @Override
+            public void onSuccess(String message) {
+                navigateToResults(finalCorrect);
+            }
 
-        // Build arrays for report card
-        ArrayList<String> qTexts    = new ArrayList<>();
+            @Override
+            public void onError(String error) {
+                Toast.makeText(QuizActivity.this, "Note: Score not synced to cloud.", Toast.LENGTH_SHORT).show();
+                navigateToResults(finalCorrect);
+            }
+        });
+    }
+
+    private void navigateToResults(int correct) {
+        ArrayList<String> qTexts      = new ArrayList<>();
         ArrayList<String> corrAnsList = new ArrayList<>();
         ArrayList<String> givenAnsList = new ArrayList<>();
 
@@ -221,21 +275,5 @@ public class QuizActivity extends AppCompatActivity {
                 submitQuiz();
             }
         }.start();
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (currentIndex > 0) {
-            saveAnswer();
-            currentIndex--;
-            loadQuestion(currentIndex);
-        } else {
-            new AlertDialog.Builder(this)
-                    .setTitle("Exit Quiz")
-                    .setMessage("Are you sure you want to quit? Progress will be lost.")
-                    .setPositiveButton("Yes", (d, w) -> super.onBackPressed())
-                    .setNegativeButton("No", null)
-                    .show();
-        }
     }
 }

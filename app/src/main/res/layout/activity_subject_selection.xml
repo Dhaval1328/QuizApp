@@ -57,6 +57,7 @@
                     <LinearLayout style="@style/SubjectTextContainer">
                         <TextView style="@style/SubjectTitleStyle" android:text="Java" />
                     </LinearLayout>
+
                     <TextView style="@style/SubjectArrowStyle" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -152,6 +153,18 @@
                     <TextView style="@style/SubjectIconStyle" android:background="@drawable/circle_bg_red" android:text="SQL" android:textSize="14sp" />
                     <LinearLayout style="@style/SubjectTextContainer">
                         <TextView style="@style/SubjectTitleStyle" android:text="RDBMS" />
+                    </LinearLayout>
+                    <TextView style="@style/SubjectArrowStyle" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardComputerNetwork"
+                style="@style/SubjectCardStyle">
+                <LinearLayout style="@style/SubjectCardInnerLayout">
+                    <TextView style="@style/SubjectIconStyle" android:background="@drawable/circle_bg_red" android:text="SQL" android:textSize="14sp" />
+                    <LinearLayout style="@style/SubjectTextContainer">
+                        <TextView style="@style/SubjectTitleStyle" android:text="Computer Network" />
                     </LinearLayout>
                     <TextView style="@style/SubjectArrowStyle" />
                 </LinearLayout>

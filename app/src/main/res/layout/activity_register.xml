@@ -93,7 +93,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:hint="Password (min. 6 characters)"
+                    android:hint="Password (min. 8 characters)"
                     app:endIconMode="password_toggle">
 
                     <com.google.android.material.textfield.TextInputEditText

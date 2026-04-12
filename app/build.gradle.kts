@@ -46,6 +46,12 @@ dependencies {
     implementation("com.sun.mail:android-mail:1.6.7")
     implementation("com.sun.mail:android-activation:1.6.7")
 
+    // ✅ NEW: OkHttp – makes HTTP calls to Supabase REST API
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+    // ✅ NEW: Gson – converts JSON from Supabase into Java objects
+    implementation("com.google.code.gson:gson:2.10.1")
+
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

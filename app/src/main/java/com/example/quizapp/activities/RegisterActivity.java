@@ -9,7 +9,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.quizapp.R;
-import com.example.quizapp.app.database.DatabaseHelper;
+import com.example.quizapp.app.SupabaseHelper;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -20,7 +20,8 @@ public class RegisterActivity extends AppCompatActivity {
 
     private TextInputLayout tilName, tilEmail, tilPassword, tilConfirmPassword;
     private TextInputEditText etName, etEmail, etPassword, etConfirmPassword;
-    private DatabaseHelper dbHelper;
+    private MaterialButton btnRegister;
+    private SupabaseHelper supabaseHelper;
 
     // Password Regex: 1 Uppercase, 1 Lowercase, 1 Digit, 1 Special Char, Min 8 Length
     private static final String PASSWORD_PATTERN =
@@ -31,10 +32,10 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
-        dbHelper = new DatabaseHelper(this);
+        supabaseHelper = new SupabaseHelper(this);
         initViews();
 
-        findViewById(R.id.btnRegister).setOnClickListener(v -> attemptRegister());
+        btnRegister.setOnClickListener(v -> attemptRegister());
 
         findViewById(R.id.tvLoginLink).setOnClickListener(v -> {
             startActivity(new Intent(this, LoginActivity.class));
@@ -47,36 +48,74 @@ public class RegisterActivity extends AppCompatActivity {
         tilEmail = findViewById(R.id.tilEmail);
         tilPassword = findViewById(R.id.tilPassword);
         tilConfirmPassword = findViewById(R.id.tilConfirmPassword);
-
         etName = findViewById(R.id.etName);
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
+        btnRegister = findViewById(R.id.btnRegister);
     }
 
     private void attemptRegister() {
         clearErrors();
 
+        // Get text safely from fields
         String name = etName.getText() != null ? etName.getText().toString().trim() : "";
         String email = etEmail.getText() != null ? etEmail.getText().toString().trim() : "";
-        String password = etPassword.getText() != null ? etPassword.getText().toString() : ""; // No trim for passwords
+        String password = etPassword.getText() != null ? etPassword.getText().toString() : "";
         String confirm = etConfirmPassword.getText() != null ? etConfirmPassword.getText().toString() : "";
 
-        if (validateInputs(name, email, password, confirm)) {
-            performRegistration(name, email, password);
-        }
+        // Validate before calling Supabase
+        if (!validateInputs(name, email, password, confirm)) return;
+
+        // Disable button to prevent double-click submissions
+        btnRegister.setEnabled(false);
+        Toast.makeText(this, "Creating account", Toast.LENGTH_SHORT).show();
+
+        // Call helper to register in Auth and save to 'profiles' table
+        supabaseHelper.registerUser(email, password, name, new SupabaseHelper.RegistrationCallback() {
+// Inside RegisterActivity.java -> attemptRegister() -> onSuccess
+
+            @Override
+            public void onSuccess(String message) {
+                runOnUiThread(() -> {
+                    // UPDATED MESSAGE: No more "check your email"
+                    Toast.makeText(RegisterActivity.this,
+                            "Registration Successful! You can now log in.",
+                            Toast.LENGTH_LONG).show();
+
+                    // Redirect to Login
+                    startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
+                    finish();
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> {
+                    btnRegister.setEnabled(true); // Re-enable so user can fix and try again
+
+                    // Specific check for existing users
+                    if (error.toLowerCase().contains("already registered")
+                            || error.toLowerCase().contains("already been registered")
+                            || error.contains("422")) {
+                        tilEmail.setError("This email is already registered.");
+                    } else {
+                        Toast.makeText(RegisterActivity.this,
+                                "Error: " + error, Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+        });
     }
 
     private boolean validateInputs(String name, String email, String password, String confirm) {
         boolean isValid = true;
 
-        // Name Validation
         if (TextUtils.isEmpty(name)) {
             tilName.setError("Name is required");
             isValid = false;
         }
 
-        // Email Validation
         if (TextUtils.isEmpty(email)) {
             tilEmail.setError("Email is required");
             isValid = false;
@@ -85,42 +124,23 @@ public class RegisterActivity extends AppCompatActivity {
             isValid = false;
         }
 
-        // Strict Password Validation
         if (TextUtils.isEmpty(password)) {
             tilPassword.setError("Password is required");
             isValid = false;
-        } else if (password.length() < 8) {
-            tilPassword.setError("Password must be at least 8 characters");
-            isValid = false;
         } else if (!Pattern.compile(PASSWORD_PATTERN).matcher(password).matches()) {
-            tilPassword.setError("Use: 1 Uppercase, 1 Lowercase, 1 Digit, & 1 Special character");
+            tilPassword.setError("Min 8 chars: 1 uppercase, 1 lowercase, 1 digit, 1 special char");
             isValid = false;
         }
 
-        // Confirm Password Validation
-        if (!password.equals(confirm)) {
+        if (TextUtils.isEmpty(confirm)) {
+            tilConfirmPassword.setError("Please confirm your password");
+            isValid = false;
+        } else if (!password.equals(confirm)) {
             tilConfirmPassword.setError("Passwords do not match");
             isValid = false;
         }
 
         return isValid;
-    }
-
-    private void performRegistration(String name, String email, String password) {
-        if (dbHelper.isEmailRegistered(email)) {
-            tilEmail.setError("Email already registered. Please login.");
-            return;
-        }
-
-        boolean isSuccess = dbHelper.registerUser(name, email, password);
-
-        if (isSuccess) {
-            Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(this, LoginActivity.class));
-            finish();
-        } else {
-            Toast.makeText(this, "Registration failed. Try again.", Toast.LENGTH_SHORT).show();
-        }
     }
 
     private void clearErrors() {
